@@ -78,9 +78,10 @@ export default function PostList() {
     await refetch();
   };
 
-  // 모바일에서만 Pull-to-Refresh를 활성화하려면:
-  // 1. 아래 주석을 해제하고
-  // const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  // 모바일에서만 Pull-to-Refresh를 활성화하려면
+  // 1. 커스텀 훅 import 및 사용
+  // import { useIsMobile } from '@/lib/hooks/useIsMobile';
+  // const isMobile = useIsMobile();
   //
   // 2. return 부분을 다음과 같이 수정:
   // const content = (

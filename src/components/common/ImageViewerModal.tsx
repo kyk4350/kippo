@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '@/store/uiStore';
+import { useIsMobile } from '@/lib/hooks/useIsMobile';
 
 export default function ImageViewerModal() {
   const {
@@ -64,6 +65,11 @@ export default function ImageViewerModal() {
     document.body.removeChild(link);
   };
 
+  // 모바일 기기 감지 (커스텀 훅 사용)
+  // 모바일에서는 이미지 길게 누르기로 저장하는 것이 더 직관적이므로 다운로드 버튼 숨김
+  // 데스크탑에서는 다운로드 버튼 제공으로 사용자 편의성 향상
+  const isMobile = useIsMobile();
+
   if (!isImageViewerOpen) return null;
 
   return (
@@ -84,17 +90,20 @@ export default function ImageViewerModal() {
             <X size={24} />
           </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDownload();
-              }}
-              className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
-            >
-              <Download size={20} />
-            </button>
-          </div>
+          {/* 다운로드 버튼 - 데스크탑에서만 표시 */}
+          {!isMobile && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload();
+                }}
+                className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+              >
+                <Download size={20} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Image */}
