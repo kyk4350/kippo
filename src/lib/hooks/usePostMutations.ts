@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   toggleLike as toggleLikeApi,
   toggleRetweet as toggleRetweetApi,
@@ -6,10 +6,10 @@ import {
   createComment as createCommentApi,
   toggleCommentLike as toggleCommentLikeApi,
   CreatePostParams,
-} from '@/lib/api/posts';
-import { Post } from '@/types/post';
-import { InfinitePostsData } from '@/types/api';
-import { currentUser } from '@/data/mockUser';
+} from "@/lib/api/posts";
+import { Post } from "@/types/post";
+import { InfinitePostsData } from "@/types/api";
+import { currentUser } from "@/data/mockUser";
 
 /**
  * 좋아요 토글 - 낙관적 업데이트
@@ -23,14 +23,18 @@ export const useToggleLike = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (postId: number) => toggleLikeApi(postId),
+    mutationFn: (postId: number) => toggleLikeApi(postId), // 서버 호출
 
+    // 1. onMutate: 서버 호출 직전 즉시 실행
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previousData = queryClient.getQueryData(['posts']);
+      // 진행중인 refetch 취소 (충돌 방지)
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      // 롤백용 데이터 백업
+      const previousData = queryClient.getQueryData(["posts"]);
 
+      // 즉시 UI 업데이트
       queryClient.setQueriesData<InfinitePostsData>(
-        { queryKey: ['posts'] },
+        { queryKey: ["posts"] },
         (old) => {
           if (!old) return old;
 
@@ -42,7 +46,7 @@ export const useToggleLike = () => {
                 post.id === postId
                   ? {
                       ...post,
-                      isLiked: !post.isLiked,
+                      isLiked: !post.isLiked, // 즉시 토글
                       likes: post.isLiked ? post.likes - 1 : post.likes + 1,
                     }
                   : post
@@ -52,17 +56,21 @@ export const useToggleLike = () => {
         }
       );
 
-      return { previousData };
+      return { previousData }; // 백업 데이터 반환
     },
 
+    // 2. onError: 서버 호출 실패시 실행
     onError: (_err, _postId, context) => {
+      // 실패시 이전 데이터로 롤백
       if (context?.previousData) {
-        queryClient.setQueryData(['posts'], context.previousData);
+        queryClient.setQueryData(["posts"], context.previousData);
       }
     },
 
+    // 3. onSettled: 성공/실패 관계없이 최종 실행
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      // 서버 데이터와 동기화 (혹시 모를 불일치 방지)
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 };
@@ -77,11 +85,11 @@ export const useToggleRetweet = () => {
     mutationFn: (postId: number) => toggleRetweetApi(postId),
 
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previousData = queryClient.getQueryData(['posts']);
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      const previousData = queryClient.getQueryData(["posts"]);
 
       queryClient.setQueriesData<InfinitePostsData>(
-        { queryKey: ['posts'] },
+        { queryKey: ["posts"] },
         (old) => {
           if (!old) return old;
 
@@ -110,12 +118,12 @@ export const useToggleRetweet = () => {
 
     onError: (_err, _postId, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(['posts'], context.previousData);
+        queryClient.setQueryData(["posts"], context.previousData);
       }
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 };
@@ -129,7 +137,7 @@ export const useCreatePost = () => {
 
     onSuccess: () => {
       // 게시물 목록 새로고침
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 };
@@ -146,12 +154,12 @@ export const useCreateComment = () => {
 
     onMutate: async ({ postId, content }) => {
       // 진행 중인 refetch 취소
-      await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previousData = queryClient.getQueryData(['posts']);
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      const previousData = queryClient.getQueryData(["posts"]);
 
       // 낙관적 업데이트: 즉시 UI에 댓글 추가
       queryClient.setQueriesData<InfinitePostsData>(
-        { queryKey: ['posts'] },
+        { queryKey: ["posts"] },
         (old) => {
           if (!old) return old;
 
@@ -186,13 +194,13 @@ export const useCreateComment = () => {
     onError: (_err, _variables, context) => {
       // 에러 발생 시 이전 상태로 롤백
       if (context?.previousData) {
-        queryClient.setQueryData(['posts'], context.previousData);
+        queryClient.setQueryData(["posts"], context.previousData);
       }
     },
 
     onSettled: () => {
       // 최종적으로 서버 데이터와 동기화
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 };
@@ -214,12 +222,12 @@ export const useToggleCommentLike = () => {
 
     onMutate: async ({ postId, commentCreatedAt }) => {
       // 진행 중인 refetch 취소
-      await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previousData = queryClient.getQueryData(['posts']);
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
+      const previousData = queryClient.getQueryData(["posts"]);
 
       // 낙관적 업데이트: 즉시 UI에 좋아요 반영
       queryClient.setQueriesData<InfinitePostsData>(
-        { queryKey: ['posts'] },
+        { queryKey: ["posts"] },
         (old) => {
           if (!old) return old;
 
@@ -258,13 +266,13 @@ export const useToggleCommentLike = () => {
     onError: (_err, _variables, context) => {
       // 에러 발생 시 이전 상태로 롤백
       if (context?.previousData) {
-        queryClient.setQueryData(['posts'], context.previousData);
+        queryClient.setQueryData(["posts"], context.previousData);
       }
     },
 
     onSettled: () => {
       // 최종적으로 서버 데이터와 동기화
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 };
