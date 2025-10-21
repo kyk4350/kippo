@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
-import { usePosts } from '@/lib/hooks/usePosts';
-import { useIntersectionObserver } from '@/lib/hooks/useIntersectionObserver';
-import { useFilterStore } from '@/store/filterStore';
-import PostCard from './PostCard';
-import PostSkeleton from './PostSkeleton';
+import { useEffect } from "react";
+import PullToRefresh from "react-simple-pull-to-refresh";
+import { usePosts } from "@/lib/hooks/usePosts";
+import { useIntersectionObserver } from "@/lib/hooks/useIntersectionObserver";
+import { useFilterStore } from "@/store/filterStore";
+import PostCard from "./PostCard";
+import PostSkeleton from "./PostSkeleton";
 
 export default function PostList() {
   const { selectedCategory, sortBy } = useFilterStore();
@@ -15,6 +16,7 @@ export default function PostList() {
     isFetchingNextPage,
     isLoading,
     isError,
+    refetch,
   } = usePosts({
     category: selectedCategory,
     sortBy,
@@ -22,16 +24,16 @@ export default function PostList() {
   });
 
   const { targetRef, isIntersecting } = useIntersectionObserver({
-    threshold: 0.1,
-    rootMargin: '100px',
-    enabled: hasNextPage && !isFetchingNextPage,
+    threshold: 0,
+    rootMargin: "200px",
+    enabled: !!hasNextPage && !isFetchingNextPage,
   });
 
   useEffect(() => {
-    if (isIntersecting && hasNextPage && !isFetchingNextPage) {
+    if (isIntersecting) {
       fetchNextPage();
     }
-  }, [isIntersecting, fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [isIntersecting, fetchNextPage]);
 
   if (isLoading) {
     return (
@@ -72,35 +74,63 @@ export default function PostList() {
     );
   }
 
+  const handleRefresh = async () => {
+    await refetch();
+  };
+
+  // 모바일에서만 Pull-to-Refresh를 활성화하려면:
+  // 1. 아래 주석을 해제하고
+  // const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  //
+  // 2. return 부분을 다음과 같이 수정:
+  // const content = (
+  //   <div>
+  //     {게시물 리스트 JSX}
+  //   </div>
+  // );
+  // return isMobile ? (
+  //   <PullToRefresh onRefresh={handleRefresh} resistance={2}>
+  //     {content}
+  //   </PullToRefresh>
+  // ) : content;
+
   return (
-    <div>
-      <div className="divide-y divide-border">
-        {allPosts.map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
+    <PullToRefresh
+      onRefresh={handleRefresh}
+      resistance={2}
+      pullingContent={
+        <div className="text-center text-text-secondary">당겨서 새로고침</div>
+      }
+    >
+      <div>
+        <div className="divide-y divide-border">
+          {allPosts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </div>
+
+        {hasNextPage && (
+          <div ref={targetRef} className="py-8">
+            {isFetchingNextPage ? (
+              <div className="divide-y divide-border">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <PostSkeleton key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-text-secondary">
+                <p>스크롤하여 더 보기</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!hasNextPage && allPosts.length > 0 && (
+          <div className="py-8 text-center text-text-secondary">
+            <p>모든 게시물을 확인했습니다</p>
+          </div>
+        )}
       </div>
-
-      {hasNextPage && (
-        <div ref={targetRef} className="py-8">
-          {isFetchingNextPage ? (
-            <div className="divide-y divide-border">
-              {Array.from({ length: 2 }).map((_, i) => (
-                <PostSkeleton key={i} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center text-text-secondary">
-              <p>스크롤하여 더 보기</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {!hasNextPage && allPosts.length > 0 && (
-        <div className="py-8 text-center text-text-secondary">
-          <p>모든 게시물을 확인했습니다</p>
-        </div>
-      )}
-    </div>
+    </PullToRefresh>
   );
 }
