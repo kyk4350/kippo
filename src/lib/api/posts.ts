@@ -1,6 +1,30 @@
 /**
  * Posts API
  * Mock 데이터를 활용한 게시물 관련 API 함수들
+ *
+ * 현재: mockClient 사용 (Mock 데이터 + 딜레이 시뮬레이션)
+ * 실제 API 전환 시:
+ *
+ * 1. import 변경
+ *    - import { mockDelay, ... } from './mockClient';
+ *    + import apiClient from './apiClient';
+ *
+ * 2. 함수 수정 예시 (getPosts)
+ *    Before:
+ *      await mockDelay();
+ *      // ... 필터링, 정렬, 페이지네이션
+ *      return createSuccessResponse({ posts, nextPage, hasMore, total });
+ *
+ *    After:
+ *      const { data } = await apiClient.get<ApiResponse<GetPostsResponse>>('/posts', {
+ *        params: { page, limit, category, sortBy }
+ *      });
+ *      return data;
+ *
+ * 3. 기타 함수들도 동일한 패턴 적용
+ *    POST: apiClient.post('/posts', requestBody)
+ *    PUT: apiClient.put(`/posts/${id}`, requestBody)
+ *    DELETE: apiClient.delete(`/posts/${id}`)
  */
 
 import { mockPosts } from '@/data/mockPosts';
@@ -12,8 +36,11 @@ import {
   createSuccessResponse,
   logApiCall,
   logApiResponse,
-} from './client';
+} from './mockClient';
 import { ApiResponse } from './types';
+
+// 실제 API 연동 시 사용 (현재는 주석 처리)
+// import apiClient from './apiClient';
 
 // 전역 포스트 저장소 (localStorage에서 불러온 데이터 + mockPosts 병합)
 let postsStore: Post[] = [];
