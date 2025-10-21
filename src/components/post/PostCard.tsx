@@ -111,7 +111,7 @@ const MemoizedPostCard = memo(PostCard, (prevProps, nextProps) => {
     prevProps.post.retweets === nextProps.post.retweets &&
     prevProps.post.isLiked === nextProps.post.isLiked &&
     prevProps.post.isRetweeted === nextProps.post.isRetweeted &&
-    prevProps.post.commentList.length === nextProps.post.commentList.length
+    prevProps.post.commentList === nextProps.post.commentList // 배열 참조 비교로 변경
   );
 });
 

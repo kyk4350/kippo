@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { useTimeStore } from '@/lib/store/timeStore';
+import { useEffect, useState, useRef } from "react";
+import { useTimeStore } from "@/lib/store/timeStore";
 
 /**
  * 화면에 보이는 경우에만 시간 업데이트를 구독하는 최적화된 hook
@@ -29,7 +29,7 @@ export const useRelativeTime = (_createdAt: string) => {
       },
       {
         // 화면에 들어오기 200px 전부터 미리 구독 (부드러운 UX)
-        rootMargin: '200px',
+        rootMargin: "200px",
         threshold: 0,
       }
     );
@@ -42,7 +42,9 @@ export const useRelativeTime = (_createdAt: string) => {
   }, []);
 
   // 화면에 보일 때만 전역 타이머 구독
-  const currentTime = useTimeStore((state) => (isVisible ? state.currentTime : 0));
+  const currentTime = useTimeStore((state) =>
+    isVisible ? state.currentTime : 0
+  );
 
   return { elementRef, currentTime };
 };

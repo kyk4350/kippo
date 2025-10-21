@@ -9,7 +9,6 @@ import {
 } from "@/lib/api/posts";
 import { Post } from "@/types/post";
 import { InfinitePostsData } from "@/types/api";
-import { currentUser } from "@/data/mockUser";
 
 /**
  * 좋아요 토글 - 낙관적 업데이트
@@ -67,11 +66,10 @@ export const useToggleLike = () => {
       }
     },
 
-    // 3. onSettled: 성공/실패 관계없이 최종 실행
-    onSettled: () => {
-      // 서버 데이터와 동기화 (혹시 모를 불일치 방지)
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
+    // 3. onSettled 제거
+    // 낙관적 업데이트로 이미 UI 반영됨
+    // 서버 응답도 성공하면 데이터 일치 보장
+    // 불필요한 전체 refetch 방지
   });
 };
 
@@ -122,9 +120,10 @@ export const useToggleRetweet = () => {
       }
     },
 
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
+    // onSettled 제거 - 낙관적 업데이트로 이미 UI 반영됨
+    // onSettled: () => {
+    //   queryClient.invalidateQueries({ queryKey: ["posts"] });
+    // },
   });
 };
 
@@ -135,15 +134,22 @@ export const useCreatePost = () => {
   return useMutation({
     mutationFn: (params: CreatePostParams) => createPostApi(params),
 
-    onSuccess: () => {
+    onSuccess: async () => {
       // 게시물 목록 새로고침
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      await queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 };
 
 /**
- * 댓글 작성 - 낙관적 업데이트
+ * 댓글 작성
+ * 서버 응답 후 데이터 refetch
+ *
+ * NOTE: 낙관적 업데이트를 사용하지 않는 이유
+ * - Comment 타입에 고유 id 필드가 없음 (createdAt을 식별자로 사용)
+ * - 낙관적 업데이트 시 클라이언트 createdAt과 서버 createdAt 불일치
+ * - 댓글 좋아요 기능이 정상 작동하지 않음
+ * - 실제 데이터라면 Comment에 id 필드를 추가하고 낙관적 업데이트 사용 권장
  */
 export const useCreateComment = () => {
   const queryClient = useQueryClient();
@@ -152,55 +158,10 @@ export const useCreateComment = () => {
     mutationFn: ({ postId, content }: { postId: number; content: string }) =>
       createCommentApi(postId, content),
 
-    onMutate: async ({ postId, content }) => {
-      // 진행 중인 refetch 취소
-      await queryClient.cancelQueries({ queryKey: ["posts"] });
-      const previousData = queryClient.getQueryData(["posts"]);
-
-      // 낙관적 업데이트: 즉시 UI에 댓글 추가
-      queryClient.setQueriesData<InfinitePostsData>(
-        { queryKey: ["posts"] },
-        (old) => {
-          if (!old) return old;
-
-          const newComment = {
-            author: currentUser,
-            content,
-            createdAt: new Date().toISOString(),
-            likes: 0,
-            isLiked: false,
-          };
-
-          return {
-            ...old,
-            pages: old.pages.map((page) => ({
-              ...page,
-              posts: page.posts.map((post: Post) =>
-                post.id === postId
-                  ? {
-                      ...post,
-                      commentList: [newComment, ...post.commentList],
-                    }
-                  : post
-              ),
-            })),
-          };
-        }
-      );
-
-      return { previousData };
-    },
-
-    onError: (_err, _variables, context) => {
-      // 에러 발생 시 이전 상태로 롤백
-      if (context?.previousData) {
-        queryClient.setQueryData(["posts"], context.previousData);
-      }
-    },
-
-    onSettled: () => {
-      // 최종적으로 서버 데이터와 동기화
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    onSuccess: async () => {
+      // 서버 응답 성공 후 즉시 리페치
+      // refetchQueries 사용 이유: 같은 페이지에서 즉시 UI 반영 필요
+      await queryClient.refetchQueries({ queryKey: ["posts"] });
     },
   });
 };
@@ -268,11 +229,6 @@ export const useToggleCommentLike = () => {
       if (context?.previousData) {
         queryClient.setQueryData(["posts"], context.previousData);
       }
-    },
-
-    onSettled: () => {
-      // 최종적으로 서버 데이터와 동기화
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
 };
