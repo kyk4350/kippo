@@ -20,6 +20,9 @@ function PostCard({ post }: PostCardProps) {
   // 최적화된 상대적 시간 업데이트: 화면에 보일 때만 구독
   const { elementRef } = useRelativeTime(post.createdAt);
 
+  // ErrorBoundary 테스트: 주석 해제하면 렌더링 에러 발생
+  // throw new Error('PostCard 렌더링 에러 테스트');
+
   return (
     <article
       ref={elementRef}
@@ -111,7 +114,7 @@ const MemoizedPostCard = memo(PostCard, (prevProps, nextProps) => {
     prevProps.post.retweets === nextProps.post.retweets &&
     prevProps.post.isLiked === nextProps.post.isLiked &&
     prevProps.post.isRetweeted === nextProps.post.isRetweeted &&
-    prevProps.post.commentList === nextProps.post.commentList 
+    prevProps.post.commentList === nextProps.post.commentList
   );
 });
 

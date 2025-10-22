@@ -93,6 +93,7 @@ apiClient.interceptors.response.use(
         case 500:
           // 서버 에러 - 사용자가 해결할 수 없는 치명적 에러
           // toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요');
+          // 실제 사용 시: 기타 모니터링 서비스로 에러 전송 가능 (endpoint, status 등 추적)
           console.error('서버 오류가 발생했습니다');
           break;
 
@@ -102,6 +103,7 @@ apiClient.interceptors.response.use(
     } else if (error.request) {
       // 네트워크 오류 - 치명적 에러 (인터넷 끊김)
       // toast.error('인터넷 연결을 확인해주세요');
+      // 실제 사용 시: 기타 모니터링 서비스로 네트워크 에러 전송 가능
       console.error('[Network Error]', '네트워크 연결을 확인해주세요');
     } else {
       // 요청 설정 오류

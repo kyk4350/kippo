@@ -132,7 +132,6 @@ export const useToggleRetweet = () => {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      // 사용자에게 에러 알림
       toast.error("리트윗 처리에 실패했습니다");
     },
   });
