@@ -50,7 +50,7 @@ export default function CommentItem({ comment, postId }: CommentItemProps) {
           </span>
         </div>
 
-        <p className="text-sm text-text-primary mt-1">{comment.content}</p>
+        <p className="text-sm text-text-primary mt-1 whitespace-pre-wrap">{comment.content}</p>
 
         <div className="flex items-center gap-3 mt-2">
           <motion.button

@@ -9,7 +9,10 @@ interface CommentInputProps {
 
 export default function CommentInput({ postId, onCommentCreated }: CommentInputProps) {
   const [comment, setComment] = useState('');
+  const [height, setHeight] = useState(40);
   const createCommentMutation = useCreateComment();
+
+  const maxChars = 280;
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -20,10 +23,24 @@ export default function CommentInput({ postId, onCommentCreated }: CommentInputP
       {
         onSuccess: () => {
           setComment('');
+          setHeight(40); // 높이 초기화
           onCommentCreated?.();
         },
       }
     );
+  };
+
+  const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const target = e.target as HTMLTextAreaElement;
+    setHeight(Math.min(target.scrollHeight, 96));
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    // 280자 이하일 때만 업데이트
+    if (value.length <= maxChars) {
+      setComment(value);
+    }
   };
 
   return (
@@ -36,20 +53,16 @@ export default function CommentInput({ postId, onCommentCreated }: CommentInputP
       <div className="flex-1 flex gap-2 items-center">
         <textarea
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
+          onChange={handleChange}
           placeholder="댓글을 입력하세요..."
           disabled={createCommentMutation.isPending}
           rows={1}
           className="flex-1 px-3 py-2 text-sm border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 max-h-24 overflow-y-auto"
           style={{
             minHeight: '40px',
-            height: 'auto',
+            height: `${height}px`,
           }}
-          onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement;
-            target.style.height = 'auto';
-            target.style.height = `${Math.min(target.scrollHeight, 96)}px`;
-          }}
+          onInput={handleInput}
         />
         {comment.trim() && (
           <button

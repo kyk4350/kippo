@@ -720,14 +720,14 @@ export const ENABLE_MOCK_ERROR = true; // ← true로 변경
 
 ### 1. 쿼리키 분리
 
-현재는 게시물과 댓글이 하나의 쿼리로 관리되지만, 실제 프로덕션에서는 분리 권장
+현재는 게시물과 댓글이 하나의 쿼리로 관리되지만, 실제 프로덕션에서는 분리 고려
 
 ```typescript
 // 현재
 queryKey: ["posts", { category, sortBy, limit }];
 // → 게시물 + 댓글 전부 포함
 
-// 권장
+// 개선
 queryKey: ["posts", "list", { category, sortBy }];
 queryKey: ["posts", postId, "comments"];
 // → 댓글만 별도 refetch 가능
