@@ -3,15 +3,21 @@
  * Mock 데이터를 활용한 게시물 관련 API 함수들
  *
  * 현재: mockClient 사용 (Mock 데이터 + 딜레이 시뮬레이션)
+ *
+ * 에러 처리 테스트:
+ * - mockClient.ts의 ENABLE_MOCK_ERROR를 true로 설정
+ * - 모든 API 요청이 실패하여 Toast 에러 메시지 및 낙관적 업데이트 롤백 확인 가능
+ *
  * 실제 API 전환 시:
  *
  * 1. import 변경
- *    - import { mockDelay, ... } from './mockClient';
+ *    - import { mockDelay, mockApiError, ... } from './mockClient';
  *    + import apiClient from './apiClient';
  *
  * 2. 함수 수정 예시 (getPosts)
  *    Before:
  *      await mockDelay();
+ *      mockApiError(...);
  *      // ... 필터링, 정렬, 페이지네이션
  *      return createSuccessResponse({ posts, nextPage, hasMore, total });
  *
@@ -21,7 +27,7 @@
  *      });
  *      return data;
  *
- * 3. 기타 함수들도 동일한 패턴 적용
+ * 3. 기타 함수들도 동일한 패턴 적용 (mockApiError 호출 제거)
  *    POST: apiClient.post('/posts', requestBody)
  *    PUT: apiClient.put(`/posts/${id}`, requestBody)
  *    DELETE: apiClient.delete(`/posts/${id}`)
@@ -32,6 +38,7 @@ import { Post } from "@/types/post";
 import { GetPostsParams, GetPostsResponse } from "@/types/api";
 import {
   mockDelay,
+  mockApiError,
   createSuccessResponse,
   logApiCall,
   logApiResponse,
@@ -105,6 +112,7 @@ export const getPosts = async (
 export const toggleLike = async (postId: number): Promise<void> => {
   logApiCall("POST", `/api/posts/${postId}/like`);
   await mockDelay(300);
+  mockApiError(`/api/posts/${postId}/like`);
 
   const store = getPostsStore();
   const post = store.find((p) => p.id === postId);
@@ -121,6 +129,7 @@ export const toggleLike = async (postId: number): Promise<void> => {
 export const toggleRetweet = async (postId: number): Promise<void> => {
   logApiCall("POST", `/api/posts/${postId}/retweet`);
   await mockDelay(300);
+  mockApiError(`/api/posts/${postId}/retweet`);
 
   const store = getPostsStore();
   const post = store.find((p) => p.id === postId);
@@ -143,6 +152,7 @@ export interface CreatePostParams {
 export const createPost = async (params: CreatePostParams): Promise<Post> => {
   logApiCall("POST", "/api/posts", params);
   await mockDelay(1000);
+  mockApiError("/api/posts");
 
   const { currentUser } = await import("@/data/mockUser");
   const { mockCategories } = await import("@/data/mockCategories");
@@ -187,10 +197,9 @@ export const createComment = async (
   postId: number,
   content: string
 ): Promise<void> => {
-  // API 호출 로깅
   logApiCall("POST", `/api/posts/${postId}/comments`, { content });
-
   await mockDelay(500);
+  mockApiError(`/api/posts/${postId}/comments`);
 
   // 현재 로그인한 사용자 정보 가져오기
   const { currentUser } = await import("@/data/mockUser");
@@ -242,6 +251,7 @@ export const toggleCommentLike = async (
 ): Promise<void> => {
   logApiCall("POST", `/api/posts/${postId}/comments/${commentCreatedAt}/like`);
   await mockDelay(300);
+  mockApiError(`/api/posts/${postId}/comments/${commentCreatedAt}/like`);
 
   const store = getPostsStore();
   const post = store.find((p) => p.id === postId);

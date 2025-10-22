@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   toggleLike as toggleLikeApi,
   toggleRetweet as toggleRetweetApi,
@@ -28,8 +29,11 @@ export const useToggleLike = () => {
     onMutate: async (postId) => {
       // 진행중인 refetch 취소 (충돌 방지)
       await queryClient.cancelQueries({ queryKey: ["posts"] });
-      // 롤백용 데이터 백업
-      const previousData = queryClient.getQueryData(["posts"]);
+
+      // 롤백용 데이터 백업 (모든 posts 쿼리의 데이터)
+      const previousQueries = queryClient.getQueriesData<InfinitePostsData>({
+        queryKey: ["posts"],
+      });
 
       // 즉시 UI 업데이트
       queryClient.setQueriesData<InfinitePostsData>(
@@ -55,15 +59,19 @@ export const useToggleLike = () => {
         }
       );
 
-      return { previousData }; // 백업 데이터 반환
+      return { previousQueries }; // 백업 데이터 반환
     },
 
     // 2. onError: 서버 호출 실패시 실행
     onError: (_err, _postId, context) => {
       // 실패시 이전 데이터로 롤백
-      if (context?.previousData) {
-        queryClient.setQueryData(["posts"], context.previousData);
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
+
+      toast.error("좋아요 처리에 실패했습니다");
     },
 
     // 3. onSettled 제거
@@ -84,7 +92,11 @@ export const useToggleRetweet = () => {
 
     onMutate: async (postId) => {
       await queryClient.cancelQueries({ queryKey: ["posts"] });
-      const previousData = queryClient.getQueryData(["posts"]);
+
+      // 롤백용 데이터 백업
+      const previousQueries = queryClient.getQueriesData<InfinitePostsData>({
+        queryKey: ["posts"],
+      });
 
       queryClient.setQueriesData<InfinitePostsData>(
         { queryKey: ["posts"] },
@@ -111,19 +123,18 @@ export const useToggleRetweet = () => {
         }
       );
 
-      return { previousData };
+      return { previousQueries };
     },
 
     onError: (_err, _postId, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(["posts"], context.previousData);
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
+      // 사용자에게 에러 알림
+      toast.error("리트윗 처리에 실패했습니다");
     },
-
-    // onSettled 제거 - 낙관적 업데이트로 이미 UI 반영됨
-    // onSettled: () => {
-    //   queryClient.invalidateQueries({ queryKey: ["posts"] });
-    // },
   });
 };
 
@@ -137,6 +148,11 @@ export const useCreatePost = () => {
     onSuccess: async () => {
       // 게시물 목록 새로고침
       await queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success("게시물이 작성되었습니다");
+    },
+
+    onError: () => {
+      toast.error("게시물 작성에 실패했습니다");
     },
   });
 };
@@ -165,6 +181,10 @@ export const useCreateComment = () => {
         refetchType: "active", // 현재 활성화된 쿼리 즉시 refetch
       });
     },
+
+    onError: () => {
+      toast.error("댓글 작성에 실패했습니다");
+    },
   });
 };
 
@@ -186,7 +206,11 @@ export const useToggleCommentLike = () => {
     onMutate: async ({ postId, commentCreatedAt }) => {
       // 진행 중인 refetch 취소
       await queryClient.cancelQueries({ queryKey: ["posts"] });
-      const previousData = queryClient.getQueryData(["posts"]);
+
+      // 롤백용 데이터 백업
+      const previousQueries = queryClient.getQueriesData<InfinitePostsData>({
+        queryKey: ["posts"],
+      });
 
       // 낙관적 업데이트: 즉시 UI에 좋아요 반영
       queryClient.setQueriesData<InfinitePostsData>(
@@ -223,14 +247,18 @@ export const useToggleCommentLike = () => {
         }
       );
 
-      return { previousData };
+      return { previousQueries };
     },
 
     onError: (_err, _variables, context) => {
       // 에러 발생 시 이전 상태로 롤백
-      if (context?.previousData) {
-        queryClient.setQueryData(["posts"], context.previousData);
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
       }
+
+      toast.error("댓글 좋아요 처리에 실패했습니다");
     },
   });
 };

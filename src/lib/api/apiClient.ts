@@ -8,9 +8,12 @@
  * 1. .env 파일에 VITE_API_BASE_URL 설정
  * 2. posts.ts에서 mockClient 대신 이 apiClient import
  * 3. 토큰 관련 주석 해제
+ * 4. toast import 주석 해제
  */
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+// 실제 API 연동 시 주석 해제
+// import { toast } from 'sonner';
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -66,40 +69,42 @@ apiClient.interceptors.response.use(
         console.error('[API Error]', status, error.config?.url, data);
       }
 
-      // 상태 코드별 에러 처리
+      // 치명적/공통 에러만 Toast 처리
+      // 비즈니스 로직 에러는 각 mutation의 onError에서 구체적으로 처리
       switch (status) {
         case 401:
-          // 인증 실패 - 토큰 만료 또는 유효하지 않음
-          // 실제 프로젝트에서는 로그인 페이지로 리다이렉트
+          // 인증 실패 - 로그인 필요
+          // toast.error('로그인이 필요합니다');
           // localStorage.removeItem('accessToken');
           // window.location.href = '/login';
           console.error('인증이 필요합니다');
           break;
 
         case 403:
-          // 권한 없음 - 인증은 되었지만 해당 리소스 접근 권한 없음
+          // 권한 없음
           console.error('권한이 없습니다');
           break;
 
         case 404:
-          // 리소스 없음
+          // 비즈니스 에러 - mutation onError에서 구체적으로 처리
           console.error('요청한 리소스를 찾을 수 없습니다');
           break;
 
         case 500:
-          // 서버 내부 오류
+          // 서버 에러 - 사용자가 해결할 수 없는 치명적 에러
+          // toast.error('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요');
           console.error('서버 오류가 발생했습니다');
           break;
 
         default:
-          // 기타 에러
           console.error('API 요청 중 오류가 발생했습니다');
       }
     } else if (error.request) {
-      // 요청은 보냈지만 응답을 받지 못함 (네트워크 오류)
+      // 네트워크 오류 - 치명적 에러 (인터넷 끊김)
+      // toast.error('인터넷 연결을 확인해주세요');
       console.error('[Network Error]', '네트워크 연결을 확인해주세요');
     } else {
-      // 요청 설정 중 오류 발생
+      // 요청 설정 오류
       console.error('[Request Error]', error.message);
     }
 

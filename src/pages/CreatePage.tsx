@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 import { mockCategories } from '@/data/mockCategories';
 import { currentUser } from '@/data/mockUser';
 import { useCreatePost } from '@/lib/hooks/usePostMutations';
@@ -22,7 +23,10 @@ export default function CreatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid || selectedCategory === null) return;
+    if (!isValid || selectedCategory === null) {
+      toast.error('모든 필수 항목을 입력해주세요');
+      return;
+    }
 
     try {
       await createPost.mutateAsync({
@@ -32,6 +36,7 @@ export default function CreatePage() {
       });
       navigate('/');
     } catch (error) {
+      // useCreatePost의 onError에서 이미 toast 표시
       console.error('게시물 작성 실패:', error);
     }
   };
