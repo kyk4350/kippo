@@ -1,14 +1,14 @@
-import { useState, memo } from 'react';
-import { Post } from '@/types/post';
-import { Check } from 'lucide-react';
-import { formatRelativeTime } from '@/lib/utils/date';
-import { highlightText } from '@/lib/utils/text';
-import { getCategoryColor } from '@/lib/utils/category';
-import { cn } from '@/lib/utils/cn';
-import ImageGrid from './ImageGrid';
-import InteractionButtons from './InteractionButtons';
-import CommentList from '@/components/comment/CommentList';
-import { useRelativeTime } from '@/lib/hooks/useRelativeTime';
+import { useState, memo } from "react";
+import { Post } from "@/types/post";
+import { Check } from "lucide-react";
+import { formatRelativeTime } from "@/lib/utils/date";
+import { highlightText } from "@/lib/utils/text";
+import { getCategoryColor } from "@/lib/utils/category";
+import { cn } from "@/lib/utils/cn";
+import ImageGrid from "./ImageGrid";
+import InteractionButtons from "./InteractionButtons";
+import CommentList from "@/components/comment/CommentList";
+import { useRelativeTime } from "@/lib/hooks/useRelativeTime";
 
 interface PostCardProps {
   post: Post;
@@ -21,7 +21,10 @@ function PostCard({ post }: PostCardProps) {
   const { elementRef } = useRelativeTime(post.createdAt);
 
   return (
-    <article ref={elementRef} className="p-4 hover:bg-surface transition-colors">
+    <article
+      ref={elementRef}
+      className="p-4 hover:bg-surface transition-colors"
+    >
       {/* Author */}
       <div className="flex items-start gap-3 mb-3">
         <img
@@ -55,7 +58,7 @@ function PostCard({ post }: PostCardProps) {
           <div className="mt-1">
             <span
               className={cn(
-                'inline-block px-2 py-1 text-xs rounded-full',
+                "inline-block px-2 py-1 text-xs rounded-full",
                 getCategoryColor(post.category)
               )}
             >
@@ -94,10 +97,7 @@ function PostCard({ post }: PostCardProps) {
 
       {/* Comments */}
       {showComments && (
-        <CommentList
-          postId={post.id}
-          comments={post.commentList}
-        />
+        <CommentList postId={post.id} comments={post.commentList} />
       )}
     </article>
   );
@@ -111,10 +111,10 @@ const MemoizedPostCard = memo(PostCard, (prevProps, nextProps) => {
     prevProps.post.retweets === nextProps.post.retweets &&
     prevProps.post.isLiked === nextProps.post.isLiked &&
     prevProps.post.isRetweeted === nextProps.post.isRetweeted &&
-    prevProps.post.commentList === nextProps.post.commentList // 배열 참조 비교로 변경
+    prevProps.post.commentList === nextProps.post.commentList 
   );
 });
 
-MemoizedPostCard.displayName = 'PostCard';
+MemoizedPostCard.displayName = "PostCard";
 
 export default MemoizedPostCard;

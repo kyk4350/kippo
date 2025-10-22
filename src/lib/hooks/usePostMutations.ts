@@ -159,9 +159,11 @@ export const useCreateComment = () => {
       createCommentApi(postId, content),
 
     onSuccess: async () => {
-      // 서버 응답 성공 후 즉시 리페치
-      // refetchQueries 사용 이유: 같은 페이지에서 즉시 UI 반영 필요
-      await queryClient.refetchQueries({ queryKey: ["posts"] });
+      // invalidateQueries: fresh 상태여도 강제로 stale 마킹 후 refetch
+      await queryClient.invalidateQueries({
+        queryKey: ["posts"],
+        refetchType: "active", // 현재 활성화된 쿼리 즉시 refetch
+      });
     },
   });
 };
