@@ -56,7 +56,7 @@ http://localhost:5173
 
 - **Tailwind CSS v3.4** - 유틸리티 우선 CSS 프레임워크
   - 선택 이유: 빠른 스타일링, 일관된 디자인 시스템, 번들 크기 최적화
-- **Framer Motion v11** - 애니메이션 라이브러리
+- **Framer Motion v10** - 애니메이션 라이브러리
   - 선택 이유: 선언적 애니메이션, React 친화적 API
 - **clsx + tailwind-merge** - 조건부 클래스 네이밍 및 충돌 방지
   - 선택 이유: 동적 스타일링 편의성, Tailwind 클래스 충돌 자동 해결
@@ -92,7 +92,8 @@ http://localhost:5173
 src/
 ├── pages/                  # 페이지 컴포넌트
 │   ├── HomePage.tsx        # 메인 피드 페이지 (무한 스크롤, 필터)
-│   └── CreatePage.tsx      # 게시물 작성 페이지 (이미지 업로드, 카테고리)
+│   ├── CreatePage.tsx      # 게시물 작성 페이지 (이미지 업로드, 카테고리)
+│   └── NotFoundPage.tsx    # 404 에러 페이지
 │
 ├── components/             # 재사용 컴포넌트
 │   ├── common/             # 공통 컴포넌트
@@ -134,10 +135,13 @@ src/
 │       ├── cn.ts                # clsx + tailwind-merge 래퍼
 │       ├── date.ts              # 날짜 포맷팅
 │       ├── category.ts          # 카테고리 유틸
-│       └── storage.ts           # 로컬 스토리지 유틸
+│       ├── storage.ts           # 로컬 스토리지 유틸
+│       └── text.tsx             # 텍스트 처리 (해시태그, URL 하이라이트)
 │
 ├── store/                  # Zustand 전역 상태
-│   └── filterStore.ts      # 필터 상태 (카테고리, 정렬)
+│   ├── filterStore.ts      # 필터 상태 (카테고리, 정렬)
+│   ├── uiStore.ts          # UI 상태 (이미지 뷰어 모달)
+│   └── timeStore.ts        # 시간 업데이트 상태
 │
 ├── types/                  # TypeScript 타입 정의
 │   ├── post.ts             # 게시물 타입
@@ -204,8 +208,11 @@ src/
   - 배경 클릭/ESC 키로 닫기
 - [x] 댓글 표시 및 입력 UI
   - 게시물 카드 하단에 댓글 목록
-  - 댓글 입력 폼 (모바일 UX 최적화, 최대 280자)
+  - 댓글 입력 폼 (모바일 UX 최적화)
   - 댓글 좋아요 기능
+  - 줄바꿈 지원 (whitespace-pre-wrap)
+  - 자동 높이 조절 (최대 4줄, 96px)
+  - 280자 무음 제한 (입력 차단 방식)
 - [x] 텍스트 하이라이팅
   - 해시태그 강조 표시
   - URL 링크 변환

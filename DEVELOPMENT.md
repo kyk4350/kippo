@@ -615,9 +615,19 @@ textarea 자동 높이 조절 및 조건부 버튼 표시로 사용자 경험 �
 
 **구현 내용**:
 
-- **자동 높이 조절**: `onInput` 이벤트로 scrollHeight 계산하여 동적 높이 조정 (최대 96px)
+- **자동 높이 조절**: React state로 scrollHeight 계산하여 동적 높이 조정 (최대 96px, 약 4줄)
+- **높이 초기화**: 댓글 제출 성공 시 높이를 40px로 리셋
+- **줄바꿈 표시**: CommentItem에 `whitespace-pre-wrap` 적용하여 줄바꿈 보존
+- **280자 제한**: 게시물과 동일한 글자 수 제한 (Instagram 패턴)
+- **무음 제한**: 글자 수 카운터 없이 입력 차단 방식 (SNS UX 패턴)
 - **조건부 버튼 표시**: 텍스트 입력 시에만 전송 버튼 표시
 - **중복 제출 방지**: mutation.isPending 상태로 버튼 비활성화
+
+**React state vs ref 선택**:
+- 초기에는 ref로 DOM을 직접 조작하여 높이 조절 구현
+- React의 단방향 데이터 흐름에 맞춰 state 기반으로 리팩토링
+- state 사용 시 React DevTools에서 디버깅 가능하고, 테스트 용이
+- 높이 초기화가 필요한 경우 onSuccess 콜백에서 setState로 처리
 
 ### 7. 텍스트 하이라이팅 구현
 
