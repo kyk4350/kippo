@@ -8,6 +8,7 @@ import {
   toggleCommentLike as toggleCommentLikeApi,
   CreatePostParams,
 } from "@/lib/api/posts";
+import { currentUser } from "@/data/mockUser";
 import { Post } from "@/types/post";
 import { InfinitePostsData } from "@/types/api";
 
@@ -158,13 +159,8 @@ export const useCreatePost = () => {
 
 /**
  * 댓글 작성
- * 서버 응답 후 데이터 refetch
- *
- * NOTE: 낙관적 업데이트를 사용하지 않는 이유
- * - Comment 타입에 고유 id 필드가 없음 (createdAt을 식별자로 사용)
- * - 낙관적 업데이트 시 클라이언트 createdAt과 서버 createdAt 불일치
- * - 댓글 좋아요 기능이 정상 작동하지 않음
- * - 실제 데이터라면 Comment에 id 필드를 추가하고 낙관적 업데이트 사용 권장
+ * 서버 응답 후 캐시 직접 업데이트 (refetch 없이 성능 최적화)
+ * - 대신 onSuccess에서 캐시만 업데이트하여 불필요한 refetch 방지
  */
 export const useCreateComment = () => {
   const queryClient = useQueryClient();
@@ -173,12 +169,49 @@ export const useCreateComment = () => {
     mutationFn: ({ postId, content }: { postId: number; content: string }) =>
       createCommentApi(postId, content),
 
-    onSuccess: async () => {
-      // invalidateQueries: fresh 상태여도 강제로 stale 마킹 후 refetch
-      await queryClient.invalidateQueries({
-        queryKey: ["posts"],
-        refetchType: "active", // 현재 활성화된 쿼리 즉시 refetch
-      });
+    onSuccess: (_data, { postId, content }) => {
+      // refetch 대신 해당 게시물만 캐시 업데이트
+      // Mock API가 이미 postsStore를 업데이트했으므로
+      // 캐시에만 새 댓글을 추가하면 됨
+
+      // 실제 API 연동 시: _data를 서버 응답 데이터로 받아서 사용
+      // const serverComment = _data; // 서버가 반환한 댓글 (id, createdAt 등 포함)
+
+      queryClient.setQueriesData<InfinitePostsData>(
+        { queryKey: ["posts"] },
+        (old) => {
+          if (!old) return old;
+
+          // Mock 환경: 클라이언트에서 댓글 객체 생성
+          // 실제 API 환경: 서버 응답(serverComment)을 그대로 사용해야 함
+          const newComment = {
+            author: currentUser,
+            content,
+            createdAt: new Date().toISOString(),
+            likes: 0,
+            isLiked: false,
+          };
+          // 실제 사용: const newComment = serverComment;
+
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              posts: page.posts.map((post: Post) =>
+                post.id === postId
+                  ? {
+                      ...post,
+                      commentList: [newComment, ...post.commentList],
+                      //             ↑ 실제 API: serverComment 사용
+                      comments: post.comments + 1,
+                    }
+                  : post
+              ),
+            })),
+          };
+        }
+      );
+      // API 호출 0번으로 최적화!
     },
 
     onError: () => {
