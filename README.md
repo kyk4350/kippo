@@ -351,7 +351,3 @@ const { data } = await apiClient.get("/posts", { params });
 - Safari
 - Firefox
 - Edge
-
-### 라이선스
-
-MIT
